@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015-2017 Expedia Inc.
+ * Copyright (C) 2015-2018 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package com.hotels.heat.core.utils.log;
 
 import java.lang.reflect.Method;
 
+import com.hotels.heat.core.runner.TestBaseRunner;
 import org.slf4j.LoggerFactory;
 import org.testng.ITestContext;
 
-
-import com.hotels.heat.core.runner.TestBaseRunner;
 import com.hotels.heat.core.specificexception.HeatException;
 
 import ch.qos.logback.classic.Level;
@@ -61,32 +60,10 @@ public class LoggingUtils {
      * This method sets the log level (logback).
      */
     public void setLogLevel() {
-        logLevel = System.getProperty("logLevel", LOG_LEVEL_INFO);
+        logLevel = System.getProperty("logLevel", Level.INFO.toString());
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        Level logLevelSetting;
-        switch (logLevel.toLowerCase()) {
-        case LOG_LEVEL_ERROR:
-            logLevelSetting = Level.ERROR;
-            break;
-        case LOG_LEVEL_WARN:
-            logLevelSetting = Level.WARN;
-            break;
-        case LOG_LEVEL_ALL:
-            logLevelSetting = Level.ALL;
-            break;
-        case LOG_LEVEL_TRACE_LOG:
-            logLevelSetting = Level.TRACE;
-            break;
-        case LOG_LEVEL_INFO:
-            logLevelSetting = Level.INFO;
-            break;
-        case LOG_LEVEL_DEBUG:
-            logLevelSetting = Level.DEBUG;
-            break;
-        default:
-            logLevelSetting = Level.INFO;
-            break;
-        }
+
+        Level logLevelSetting = Level.toLevel(logLevel.toUpperCase());
         root.setLevel(logLevelSetting);
     }
 
@@ -98,10 +75,17 @@ public class LoggingUtils {
         this.testID = testID;
     }
 
+    public void resetTestCaseId() {
+        this.testID = null;
+    }
 
 
     public void setFlowStep(Integer flowStepInput) {
         flowStep = flowStepInput;
+    }
+
+    public void resetFlowStep() {
+        flowStep = null;
     }
 
     public String getTestCaseDetails() {
@@ -212,7 +196,5 @@ public class LoggingUtils {
                     + " / cause: '" + oEx.getCause() + "' / message: '" + oEx.getLocalizedMessage() + "'");
         }
     }
-
-
 
 }

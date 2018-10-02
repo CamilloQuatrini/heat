@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
+import com.hotels.heat.core.utils.testobjects.TestSuite;
 import org.testng.ITestContext;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
@@ -45,17 +46,16 @@ public class TestBaseRunner implements RunnerInterface {
     static {
         new LoggingUtils().info(
                 "\n\n"
-                + "      ___           ___           ___                 \n"
-                + "     /__/\\         /  /\\         /  /\\          ___   \n"
-                + "     \\  \\:\\       /  /:/_       /  /::\\        /  /\\  \n"
-                + "      \\__\\:\\     /  /:/ /\\     /  /:/\\:\\      /  /:/  \n"
-                + "  ___ /  /::\\   /  /:/ /:/_   /  /:/~/::\\    /  /:/   \n"
-                + " /__/\\  /:/\\:\\ /__/:/ /:/ /\\ /__/:/ /:/\\:\\  /  /::\\   \n"
-                + " \\  \\:\\/:/__\\/ \\  \\:\\/:/ /:/ \\  \\:\\/:/__\\/ /__/:/\\:\\  \n"
-                + "  \\  \\::/       \\  \\::/ /:/   \\  \\::/      \\__\\/  \\:\\ \n"
-                + "   \\  \\:\\        \\  \\:\\/:/     \\  \\:\\           \\  \\:\\\n"
-                + "    \\  \\:\\        \\  \\::/       \\  \\:\\           \\__\\/\n"
-                + "     \\__\\/         \\__\\/         \\__\\/                \n"
+                + "   ooooo   ooooo oooooooooooo       .o.       ooooooooooooo \n" +
+                  "   `888'   `888' `888'     `8      .888.      8'   888   `8 \n" +
+                  "    888     888   888             .8\"888.          888      \n" +
+                  "    888ooooo888   888oooo8       .8' `888.         888      \n" +
+                  "    888     888   888    \"      .88ooo8888.        888      \n" +
+                  "    888     888   888       o  .8'     `888.       888      \n" +
+                  "   o888o   o888o o888ooooood8 o88o     o8888o     o888o     \n" +
+                  "  ----------------------------------------------------------\n" +
+                  "          Hotels.com Engine Architecture for Testing \n" +
+                  "  ----------------------------------------------------------\n"
         );
 
         new LoggingUtils().info(
@@ -93,6 +93,7 @@ public class TestBaseRunner implements RunnerInterface {
 
     private PlaceholderHandler placeholderHandler;
     private String inputJsonPath;
+
 
     /**
      * Method that takes test suites parameters and sets some environment properties.

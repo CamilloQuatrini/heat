@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.restassured.module.jsv.JsonSchemaValidator;
 import org.testng.ITestContext;
 
 import com.hotels.heat.core.handlers.AssertionHandler;
@@ -32,7 +33,6 @@ import com.hotels.heat.core.utils.TestCaseUtils;
 import com.hotels.heat.core.utils.log.LoggingUtils;
 
 import io.restassured.http.Header;
-import io.restassured.module.jsv.JsonSchemaValidator;
 import io.restassured.response.Response;
 
 

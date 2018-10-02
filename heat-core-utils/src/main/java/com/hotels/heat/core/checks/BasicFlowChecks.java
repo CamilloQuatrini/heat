@@ -141,6 +141,7 @@ public class BasicFlowChecks extends BasicMultipleChecks {
         getLogUtils().debug("response: '{}'", stepResponse.asString());
         basicChecks.setFlowOutputParameters(retrievedParameters);
         basicChecks.commonTestValidation(inputJsonBlock);
+        getLogUtils().resetFlowStep();
     }
 
         /**
