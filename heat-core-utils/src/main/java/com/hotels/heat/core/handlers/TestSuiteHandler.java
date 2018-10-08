@@ -54,7 +54,7 @@ public final class TestSuiteHandler {
         return testSuiteHandler;
     }
 
-    public String getWebappName() {
+    /*public String getWebappName() {
         return webappName;
     }
 
@@ -65,6 +65,7 @@ public final class TestSuiteHandler {
             this.webappName = webappName;
         }
     }
+
 
     public void setPropertyFilePath(String propertyFilePath) {
         this.propertyFilePath = propertyFilePath;
@@ -90,8 +91,11 @@ public final class TestSuiteHandler {
         tcUtils.setLogUtils(logUtils);
     }
 
+    */
+
     public TestCaseUtils getTestCaseUtils() {
         return tcUtils;
     }
+
 
 }

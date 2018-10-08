@@ -436,7 +436,7 @@ public class PlaceholderHandler {
                     outputStr = getSpecificPreloadValue(stringInput, preloadedObject);
                 }
             } else {
-                logUtils.warning("variable '{}' not correctly preloaded - no transformation will be applied", outputStr);
+                logUtils.warn("variable '{}' not correctly preloaded - no transformation will be applied", outputStr);
                 outputStr = stringInput;
 //                throw new HeatException(logUtils.getExceptionDetails() + "variable '" + outputStr + "' not correctly preloaded");
             }

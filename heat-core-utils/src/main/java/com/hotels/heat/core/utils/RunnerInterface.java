@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.testng.ITest;
 import org.testng.ITestContext;
 
 import io.restassured.response.Response;
@@ -37,7 +38,7 @@ public interface RunnerInterface {
             String enabledEnvironments,
             ITestContext context);
 
-    Iterator<Object[]> providerJson();
+    Iterator<Object[]> providerJson(ITestContext context);
 
     Map resolvePlaceholdersInTcParams(Map<String, Object> testCaseParams, List<String> paramsToSkip);
 

@@ -142,19 +142,13 @@ public class TestCaseUtils {
 
     /**
      * It is the method that handles the reading of the json input file that is driving the test suite.
-     * @param testSuiteFilePath the path of the json input file
      * @param context it is the context of the test. It is managed from TestNG but it can be used to set and read some parameters all over the test suite execution
      * @return the iterator of the test cases described in the json input file
      */
-    public Iterator<Object[]> jsonReader(String testSuiteFilePath, ITestContext context) {
-        if (logUtils == null) {
-            throw new HeatException("logUtils null");
-        }
-        if (context == null) {
-            throw new HeatException(logUtils.getExceptionDetails() + "context null");
-        }
+    public Iterator<Object[]> jsonReader(ITestContext context) {
 
         Iterator<Object[]> iterator;
+        String testSuiteFilePath = (String) context.getAttribute(TestBaseRunner.CONTEXT_SUITE_JSON_FILE_PATH);
         //check if the test suite is runnable
         // (in terms of enabled environments or test suite explicitly declared in the 'heatTest' system property)
         if (isTestSuiteRunnable(context.getName())) {
@@ -258,10 +252,10 @@ public class TestCaseUtils {
                 outputStr = formatMatcher.group(group);
             }
         } catch (Exception oEx) {
-            logUtils.warning("Exception: stringToProcess = '{}'", stringToProcess);
-            logUtils.warning("Exception: patternForFormat = '{}'", patternForFormat);
-            logUtils.warning("Exception: group = '{}'", group);
-            logUtils.warning("Exception cause '{}'", oEx.getCause());
+            logUtils.warn("Exception: stringToProcess = '{}'", stringToProcess);
+            logUtils.warn("Exception: patternForFormat = '{}'", patternForFormat);
+            logUtils.warn("Exception: group = '{}'", group);
+            logUtils.warn("Exception cause '{}'", oEx.getCause());
         }
         return outputStr;
     }
@@ -281,7 +275,7 @@ public class TestCaseUtils {
                 outputStr = NO_MATCH;
             }
         } catch (Exception oEx) {
-            logUtils.warning("Exception cause '{}'", oEx.getCause());
+            logUtils.warn("Exception cause '{}'", oEx.getCause());
         }
         return outputStr;
     }

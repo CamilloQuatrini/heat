@@ -196,7 +196,7 @@ public class RestAssuredRequestMaker {
                 serviceResponse = requestSpecification.when().post(url);
                 break;
             default:
-                logUtils.warning("HTTP METHOD '{}' not recognized. GET METHOD used as default", httpMethod.toString());
+                logUtils.warn("HTTP METHOD '{}' not recognized. GET METHOD used as default", httpMethod.toString());
                 serviceResponse = requestSpecification.when().get(url);
                 break;
             }

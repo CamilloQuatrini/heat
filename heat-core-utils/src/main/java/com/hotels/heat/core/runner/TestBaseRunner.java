@@ -15,13 +15,12 @@
  */
 package com.hotels.heat.core.runner;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
 
+import com.hotels.heat.core.utils.testobjects.Status;
+import com.hotels.heat.core.utils.testobjects.TestCase;
 import com.hotels.heat.core.utils.testobjects.TestSuite;
+import org.slf4j.LoggerFactory;
 import org.testng.ITestContext;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
@@ -43,6 +42,15 @@ import io.restassured.response.Response;
  * Generic Test Runner class.
  */
 public class TestBaseRunner implements RunnerInterface {
+
+    public static final String CONTEXT_PROPERTY_FILE_PATH = "PROPERTY_FILE_PATH";
+    public static final String CONTEXT_WEBAPP_NAME = "WEBAPP_NAME";
+    public static final String CONTEXT_ENABLED_ENVIRONMENTS = "ENABLED_ENVIRONMENTS";
+    public static final String CONTEXT_SUITE_JSON_FILE_PATH = "SUITE_JSON_FILE_PATH";
+    public static final String ENABLED_ENVIRONMENT_STRING_SEPARATOR = ",";
+    public static final String CONTEXT_TEST_CASES_LIST = "TEST_CASES_LIST";
+    public static final String CONTEXT_SUITE_STATUS = "SUITE_STATUS";
+
     static {
         new LoggingUtils().info(
                 "\n\n"
@@ -58,7 +66,7 @@ public class TestBaseRunner implements RunnerInterface {
                   "  ----------------------------------------------------------\n"
         );
 
-        new LoggingUtils().info(
+        LoggerFactory.getLogger(TestBaseRunner.class).info(
                 "\n"
                 + "+-----------------------------------------------------------------------+\n"
                 + "| Environment under test : '{}'\n"
@@ -72,7 +80,17 @@ public class TestBaseRunner implements RunnerInterface {
 
     }
 
-    public static final String ATTR_TESTCASE_ID = "testId";
+
+    public static final String ENV_PROP_FILE_PATH = "envPropFilePath";
+    public static final String WEBAPP_NAME = "webappName";
+    public static final String NO_INPUT_WEBAPP_NAME = "noInputWebappName";
+
+    public static final String INPUT_JSON_PATH = "inputJsonPath";
+    public static final String ENABLED_ENVIRONMENTS = "enabledEnvironments";
+
+    private ITestContext testContext;
+
+    /*public static final String ATTR_TESTCASE_ID = "testId";
     public static final String ATTR_TESTCASE_NAME = "testName";
 
     public static final String STATUS_SKIPPED = "SKIPPED";
@@ -83,17 +101,9 @@ public class TestBaseRunner implements RunnerInterface {
     public static final String SUITE_DESCRIPTION_CTX_ATTR = "suiteDescription";
     public static final String TC_DESCRIPTION_CTX_ATTR = "tcDescription";
 
-    public static final String NO_INPUT_WEBAPP_NAME = "noInputWebappName";
-    public static final String WEBAPP_NAME = "webappName";
-    public static final String ENABLED_ENVIRONMENTS = "enabledEnvironments";
-    public static final String ENV_PROP_FILE_PATH = "envPropFilePath";
-    public static final String INPUT_JSON_PATH = "inputJsonPath";
-
-    private ITestContext testContext;
-
     private PlaceholderHandler placeholderHandler;
     private String inputJsonPath;
-
+*/
 
     /**
      * Method that takes test suites parameters and sets some environment properties.
@@ -107,10 +117,15 @@ public class TestBaseRunner implements RunnerInterface {
     public void beforeTestSuite(String propFilePath,
                                 @Optional(NO_INPUT_WEBAPP_NAME) String inputWebappName,
                                 ITestContext context) {
-        TestSuiteHandler testSuiteHandler = TestSuiteHandler.getInstance();
+
+        context.setAttribute(CONTEXT_PROPERTY_FILE_PATH, propFilePath);
+        context.setAttribute(CONTEXT_WEBAPP_NAME, inputWebappName);
+
+
+        /*TestSuiteHandler testSuiteHandler = TestSuiteHandler.getInstance();
         testSuiteHandler.setPropertyFilePath(propFilePath);
         testSuiteHandler.populateEnvironmentHandler();
-        testSuiteHandler.populateTestCaseUtils();
+        testSuiteHandler.populateTestCaseUtils();*/
 
     }
 
@@ -126,18 +141,25 @@ public class TestBaseRunner implements RunnerInterface {
     public void beforeTestCase(String inputJsonParamPath,
         String enabledEnvironments,
         ITestContext context) {
-        TestSuiteHandler testSuiteHandler = TestSuiteHandler.getInstance();
+
+        context.setAttribute(CONTEXT_ENABLED_ENVIRONMENTS, Arrays.asList(enabledEnvironments.split(ENABLED_ENVIRONMENT_STRING_SEPARATOR)));
+        context.setAttribute(CONTEXT_SUITE_JSON_FILE_PATH, inputJsonParamPath);
+
+        /*TestSuiteHandler testSuiteHandler = TestSuiteHandler.getInstance();
         testSuiteHandler.getEnvironmentHandler().setEnabledEnvironments(enabledEnvironments);
         inputJsonPath = inputJsonParamPath;
         testSuiteHandler.getLogUtils().setTestContext(context);
-        testContext = context;
+        testContext = context;*/
     }
 
 
     @Override
     @DataProvider(name = "provider")
-    public Iterator<Object[]> providerJson() {
-        return TestSuiteHandler.getInstance().getTestCaseUtils().jsonReader(inputJsonPath, testContext);
+    public Iterator<Object[]> providerJson(ITestContext context) {
+        List<TestCase> testCasesInTheSuite = new ArrayList();
+        context.setAttribute(CONTEXT_TEST_CASES_LIST, testCasesInTheSuite);
+        context.setAttribute(CONTEXT_SUITE_STATUS, Status.NOT_PERFORMED);
+        return TestSuiteHandler.getInstance().getTestCaseUtils().jsonReader(context);
     }
 
     /**
