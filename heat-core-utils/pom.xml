@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.hotels</groupId>
         <artifactId>heat-core</artifactId>
-        <version>4.0.2-SNAPSHOT</version>
+        <version>4.0.3-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -36,7 +36,7 @@
         </dependency>
     </dependencies>
     <properties>
-        <jdk.version>10</jdk.version>
+        <jdk.version>1.8</jdk.version>
 
         <!-- Maven Checkstyle Plugin -->
         <main.basedir>${project.basedir}</main.basedir>
