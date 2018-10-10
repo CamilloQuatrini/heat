@@ -41,28 +41,6 @@ import io.restassured.response.Response;
  */
 public class SingleMode extends TestBaseRunner {
 
-
-
-    private String webappPath;
-    private ITestContext testContext;
-    private String webappName;
-
-    /**
-     * Method that takes test suites parameters and sets some environment properties.
-     * @param propFilePath path of the property file data
-     * @param inputWebappName name of the service to test (optional parameter)
-     * @param context testNG context
-     */
-    @BeforeSuite
-    @Override
-    @Parameters({ENV_PROP_FILE_PATH, WEBAPP_NAME})
-    public void beforeTestSuite(String propFilePath,
-                                @Optional(NO_INPUT_WEBAPP_NAME) String inputWebappName,
-                                ITestContext context) {
-        super.beforeTestSuite(propFilePath, inputWebappName, context);
-        TestSuiteHandler.getInstance().setWebappName(inputWebappName);
-    }
-
     /**
      * Method that takes tests parameters and sets some environment properties.
      * @param inputJsonParamPath path of the json input file with input data for tests

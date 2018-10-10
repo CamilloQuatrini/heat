@@ -56,8 +56,17 @@ public class TestBaseRunner implements RunnerInterface {
     public static final String CONTEXT_SUITE_STATUS = "SUITE_STATUS";
     public static final String CONTEXT_TEST_CASE_ID = "TEST_CASE_ID";
     public static final String CONTEXT_TEST_CASE_STEP_ID = "TEST_CASE_STEP_ID";
+    public static final String CONTEXT_ENVIRONMENT_UNDER_TEST = "ENVIRONMENT_UNDER_TEST";
+    public static final String CONTEXT_HTTP_METHOD = "HTTP_METHOD";
+    public static final String CONTEXT_TEST_SUITE_DESCRIPTION = "TEST_SUITE_DESCRIPTION";
+    public static final String CONTEXT_BEFORE_SUITE_VARIABLES = "BEFORE_SUITE_VARIABLES";
+    public static final String CONTEXT_JSON_SCHEMAS = "JSON_SCHEMAS";
+    public static final String CONTEXT_WEBAPP_UNDER_TEST = "WEBAPP_UNDER_TEST";
 
     private final Logger logger = LoggerFactory.getLogger(TestBaseRunner.class);
+
+    public static final String SYSPROP_DEFAULT_ENVIRONMENT = "defaultEnvironment";
+    public static final String SYSPROP_HEAT_TEST = "heatTest";
 
     static {
         LoggerFactory.getLogger(TestBaseRunner.class).info(
@@ -82,7 +91,7 @@ public class TestBaseRunner implements RunnerInterface {
                 + "| Requested Log Level: : '{}'\n"
                 + "| Specific test requested: '{}'\n"
                 + "+-----------------------------------------------------------------------+\n",
-                System.getProperty("environment", System.getProperty("defaultEnvironment")),
+                System.getProperty("environment", System.getProperty(SYSPROP_DEFAULT_ENVIRONMENT)),
                 System.getProperty("logLevel", "INFO"),
                 System.getProperty("heatTest", "All Tests"));
 
@@ -96,22 +105,6 @@ public class TestBaseRunner implements RunnerInterface {
     public static final String INPUT_JSON_PATH = "inputJsonPath";
     public static final String ENABLED_ENVIRONMENTS = "enabledEnvironments";
 
-    private ITestContext testContext;
-
-    /*public static final String ATTR_TESTCASE_ID = "testId";
-    public static final String ATTR_TESTCASE_NAME = "testName";
-
-    public static final String STATUS_SKIPPED = "SKIPPED";
-
-    public static final String TESTCASE_ID_SEPARATOR = ".";
-    public static final String TESTCASE_ID_SEPARATOR_ESCAPED = "\\.";
-
-    public static final String SUITE_DESCRIPTION_CTX_ATTR = "suiteDescription";
-    public static final String TC_DESCRIPTION_CTX_ATTR = "tcDescription";
-
-    private PlaceholderHandler placeholderHandler;
-    private String inputJsonPath;
-*/
 
     /**
      * Method that takes test suites parameters and sets some environment properties.
@@ -126,10 +119,10 @@ public class TestBaseRunner implements RunnerInterface {
                                 @Optional(NO_INPUT_WEBAPP_NAME) String inputWebappName,
                                 ITestContext context) {
 
-        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "beforeTestSuite - start");
+        logger.trace("{} beforeTestSuite - start", LogUtils.getInstance(context).getCurrentTestDescription());
         context.setAttribute(CONTEXT_PROPERTY_FILE_PATH, propFilePath);
         context.setAttribute(CONTEXT_WEBAPP_NAME, inputWebappName);
-        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "beforeTestSuite - end");
+        logger.trace("{} beforeTestSuite - end", LogUtils.getInstance(context).getCurrentTestDescription());
     }
 
     /**
@@ -145,10 +138,10 @@ public class TestBaseRunner implements RunnerInterface {
         String enabledEnvironments,
         ITestContext context) {
 
-        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "beforeTestCase - start");
+        logger.trace("{} beforeTestCase - start", LogUtils.getInstance(context).getCurrentTestDescription());
         context.setAttribute(CONTEXT_ENABLED_ENVIRONMENTS, Arrays.asList(enabledEnvironments.split(ENABLED_ENVIRONMENT_STRING_SEPARATOR)));
         context.setAttribute(CONTEXT_SUITE_JSON_FILE_PATH, inputJsonParamPath);
-        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "beforeTestCase - end");
+        logger.trace("{} beforeTestCase - end", LogUtils.getInstance(context).getCurrentTestDescription());
     }
 
 
@@ -160,12 +153,15 @@ public class TestBaseRunner implements RunnerInterface {
     @Override
     @DataProvider(name = "provider")
     public Iterator<Object[]> providerJson(ITestContext context) {
-        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "providerJson - start");
+        logger.trace("{} providerJson - start", LogUtils.getInstance(context).getCurrentTestDescription());
         List<TestCase> testCasesInTheSuite = new ArrayList();
         context.setAttribute(CONTEXT_TEST_CASES_LIST, testCasesInTheSuite);
         context.setAttribute(CONTEXT_SUITE_STATUS, Status.NOT_PERFORMED);
-        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "providerJson - next step is jsonReader");
-        return (new TestCaseUtils(context)).jsonReader();
+        logger.trace("{} providerJson - next step is jsonReader", LogUtils.getInstance(context).getCurrentTestDescription());
+        TestCaseUtils tcUtils = new TestCaseUtils();
+        tcUtils.loadSystemProperties(context);
+        Iterator<Object[]> iterator = tcUtils.jsonReader(context);
+        return iterator;
     }
 
     /**

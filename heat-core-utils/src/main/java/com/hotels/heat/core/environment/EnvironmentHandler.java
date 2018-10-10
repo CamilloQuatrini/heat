@@ -23,7 +23,9 @@ import java.util.List;
 import com.hotels.heat.core.handlers.PlaceholderHandler;
 import com.hotels.heat.core.handlers.PropertyHandler;
 import com.hotels.heat.core.handlers.TestSuiteHandler;
+import com.hotels.heat.core.runner.TestBaseRunner;
 import com.hotels.heat.core.utils.log.LoggingUtils;
+import org.testng.ITestContext;
 
 
 /**
@@ -31,10 +33,10 @@ import com.hotels.heat.core.utils.log.LoggingUtils;
  */
 public final class EnvironmentHandler {
 
-    public static final String SYS_PROP_HEAT_TEST = "heatTest";
+    /*public static final String SYS_PROP_HEAT_TEST = "heatTest";
 
-    private static final String DEFAULT_ENVIRONMENT = "DEFAULT_ENVIRONMENT";
-    private static final String DEFAULT_SERVICE = "DEFAULT_SERVICE";
+
+
     private static final String HTTP = "http";
     private static final String HEAT_TEST_SEPARATOR = ",";
 
@@ -44,10 +46,11 @@ public final class EnvironmentHandler {
     private String environmentUnderTest;
     private String webappUnderTest;
 
-    private LoggingUtils logUtils;
     private List<String> heatTestPropertyList;
     private PlaceholderHandler placeholderHandler;
+*/
 
+    private String propertyFilePath;
 
     /**
      * Constructor with parameters.
@@ -59,6 +62,13 @@ public final class EnvironmentHandler {
         loadSysProperties();
         this.setEnabledEnvironments(defaultEnvironment);
     }
+
+    public EnvironmentHandler(ITestContext context) {
+        this.propertyFilePath = (String) context.getAttribute(TestBaseRunner.CONTEXT_PROPERTY_FILE_PATH);
+    }
+
+
+
 
     /**
      * Constructor of the object with the loading of the property file.
@@ -77,7 +87,7 @@ public final class EnvironmentHandler {
      * - environment: environment under test; if it is not defined, it will be set to "defaultEnvironment" value
      * - webappName: the name of the service under test, useful when we have to load properties from environment.properties file.
      */
-    private void loadSysProperties() {
+    /*private void loadSysProperties() {
         logUtils.trace("defaultEnvironment '{}'", System.getProperty("defaultEnvironment"));
         logUtils.trace("DEFAULT_ENVIRONMENT '{}'", DEFAULT_ENVIRONMENT);
         defaultEnvironment = System.getProperty("defaultEnvironment", DEFAULT_ENVIRONMENT);
@@ -85,7 +95,7 @@ public final class EnvironmentHandler {
         logUtils.trace("Environment under test '{}'", environmentUnderTest);
         webappUnderTest = System.getProperty("webappName", DEFAULT_SERVICE);
         heatTestPropertyList = testIds2List(System.getProperty(SYS_PROP_HEAT_TEST));
-    }
+    }*/
 
 
     /**

@@ -20,15 +20,11 @@ import static io.restassured.path.json.JsonPath.with;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.hotels.heat.core.utils.log.LogUtils;
 import com.hotels.heat.core.utils.testobjects.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,9 +49,8 @@ public class TestCaseUtils {
 
     public static final String NO_MATCH = "NO MATCH";
 
-    public static final String JSON_FIELD_STEP_NUMBER = "stepNumber";
+    /*public static final String JSON_FIELD_STEP_NUMBER = "stepNumber";
     public static final String JSON_FIELD_URL = "url";
-    public static final String JSON_FIELD_HTTP_METHOD = "httpMethod";
     public static final String JSON_FIELD_POST_BODY = "postBody";
     public static final String JSON_FIELD_MULTIPART_BODY = "parts";
     public static final String JSON_FIELD_MULTIPART_FILE = "file";
@@ -63,30 +58,33 @@ public class TestCaseUtils {
     public static final String JSON_FIELD_MULTIPART_CONTENT_TYPE = "contentType";
     public static final String JSON_FIELD_MULTIPART_VALUE = "value";
     public static final String JSON_FIELD_COOKIES = "cookies";
-    public static final String JSON_FIELD_QUERY_PARAMETERS = "queryParameters";
     public static final String JSON_FIELD_HEADERS = "headers";
 
-    private static final String JSONPATH_GENERAL_SETTINGS = "testSuite.generalSettings";
-    private static final String JSONPATH_BEFORE_SUITE_SECTION = "testSuite.beforeTestSuite";
-    private static final String JSONPATH_JSONSCHEMAS = "testSuite.jsonSchemas";
-    private static final String JSONPATH_TEST_CASES = "testSuite.testCases";
     private static final String SUITE_DESCRIPTION_DEFAULT = "TEST SUITE";
-    private static final String SUITE_DESCRIPTION_PATH = "suiteDesc";
-    public static final String CUSTOM_FIELDS        = "customFields";
-    public static final String FLOW_STEPS_OBJ       = "e2eFlowSteps";
-    public static final String OBJECTNAME_OBJ       = "objectName";
 
-    private Method httpMethod;
-    private String suiteDescription;
     private Map<String, String> jsonSchemas;
     private Iterator<Object[]> tcArrayIterator;
     private PlaceholderHandler placeholderHandler;
     private Map<String, Object> beforeSuiteVariables;
-    private Map<String, Object> beforeStepVariables;
+    private Map<String, Object> beforeStepVariables;*/
+
+    private static final String JSONPATH_GENERAL_SETTINGS = "testSuite.generalSettings";
+    public static final String JSON_FIELD_HTTP_METHOD = "httpMethod";
+    private static final String SUITE_DESCRIPTION_PATH = "suiteDesc";
+    private static final String JSONPATH_BEFORE_SUITE_SECTION = "testSuite.beforeTestSuite";
+    private static final String JSONPATH_JSONSCHEMAS = "testSuite.jsonSchemas";
+    private static final String JSONPATH_TEST_CASES = "testSuite.testCases";
+
+    public static final String JSON_FIELD_QUERY_PARAMETERS = "queryParameters";
+    public static final String CUSTOM_FIELDS        = "customFields";
+    public static final String FLOW_STEPS_OBJ       = "e2eFlowSteps";
+    public static final String OBJECTNAME_OBJ       = "objectName";
+
+    private static final String DEFAULT_ENVIRONMENT = "DEFAULT_ENVIRONMENT";
+    private static final String DEFAULT_SERVICE = "DEFAULT_SERVICE";
 
     private final Logger logger = LoggerFactory.getLogger(TestCaseUtils.class);
 
-    private ITestContext context;
 
     /**
      * Constructor for TestCaseUtils object.
@@ -94,80 +92,102 @@ public class TestCaseUtils {
      * preload variables coming from the json input file driving the test suite. Moreover it handles the running of any test cases
      * inside the suite.
      */
-    public TestCaseUtils(ITestContext context) {
-        this.context = context;
+    public TestCaseUtils() {
         //this.beforeStepVariables = new HashMap();
         //this.httpMethod = Method.GET;
         //this.suiteDescription = SUITE_DESCRIPTION_DEFAULT;
     }
 
+    public void loadSystemProperties(ITestContext context) {
+        /*heatTestPropertyList = testIds2List(System.getProperty(SYS_PROP_HEAT_TEST));*/ //TODO: add this part!
+        String logString = LogUtils.getInstance(context).getCurrentTestDescription();
+        String defaultEnvironment = System.getProperty("defaultEnvironment", DEFAULT_ENVIRONMENT);
+        logger.trace("{} defaultEnvironment '{}'", logString, defaultEnvironment);
+
+        String environmentUnderTest = System.getProperty("environment", defaultEnvironment);
+        context.setAttribute(TestBaseRunner.CONTEXT_ENVIRONMENT_UNDER_TEST, environmentUnderTest);
+        logger.trace("{} environmentUnderTest '{}'", logString, environmentUnderTest);
+
+        String webappUnderTest = System.getProperty("webappName", DEFAULT_SERVICE);
+        context.setAttribute(TestBaseRunner.CONTEXT_WEBAPP_UNDER_TEST, webappUnderTest);
+        logger.trace("{} webappUnderTest '{}'", logString, webappUnderTest);
+    }
+
     /**
      * It is the method that handles the reading of the json input file that is driving the test suite.
-     * @param context it is the context of the test. It is managed from TestNG but it can be used to set and read some parameters all over the test suite execution
      * @return the iterator of the test cases described in the json input file
      */
-    public Iterator<Object[]> jsonReader() {
+    public Iterator<Object[]> jsonReader(ITestContext context) {
 
         Iterator<Object[]> iterator;
         String testSuiteFilePath = (String) context.getAttribute(TestBaseRunner.CONTEXT_SUITE_JSON_FILE_PATH);
         //check if the test suite is runnable
         // (in terms of enabled environments or test suite explicitly declared in the 'heatTest' system property)
-        if (isTestSuiteRunnable(context.getName())) {
+        if (isTestSuiteRunnable(context)) {
             File testSuiteJsonFile = Optional.ofNullable(getClass().getResource(testSuiteFilePath))
                 .map(url -> new File(url.getPath()))
-                .orElseThrow(() -> new HeatException(logUtils.getExceptionDetails()
-                        + "the file '" + testSuiteFilePath + "' does not exist"));
+                .orElseThrow(() -> new HeatException(LogUtils.getInstance(context).getCurrentTestDescription() + " the file '" + testSuiteFilePath + "' does not exist"));
             try {
                 JsonPath testSuiteJsonPath = with(testSuiteJsonFile);
-                loadGeneralSettings(testSuiteJsonPath);
-                loadBeforeSuiteSection(testSuiteJsonPath);
-                loadJsonSchemaForOutputValidation(testSuiteJsonPath);
+                //TODO: here the validation of input json file!!!!
+                loadGeneralSettings(testSuiteJsonPath, context);
+                loadBeforeSuiteSection(testSuiteJsonPath, context);
+                loadJsonSchemaForOutputValidation(testSuiteJsonPath, context);
                 iterator = getTestCaseIterator(testSuiteJsonPath);
             } catch (Exception oEx) {
-                throw new HeatException(String.format("%scatched exception '%s'",
-                        logUtils.getExceptionDetails(), oEx.getLocalizedMessage()), oEx);
+                throw new HeatException(String.format("%s catched exception '%s'",
+                        LogUtils.getInstance(context).getCurrentTestDescription(), oEx.getLocalizedMessage()), oEx);
             }
         } else {
-            logUtils.debug("SKIPPED test suite");
+            logger.debug("{} Test Suite Skipped", LogUtils.getInstance(context).getCurrentTestDescription());
             context.setAttribute(TestBaseRunner.CONTEXT_SUITE_STATUS, Status.SKIPPED);
-            //throw new SkipException(logUtils.getTestCaseDetails() + "Skip test: this suite is not requested");
+            throw new SkipException( LogUtils.getInstance(context).getCurrentTestDescription() + " Skip test: this suite is not requested");
         }
         return iterator;
     }
 
-    public Map<String, Object> getBeforeSuiteVariables() {
+    /*public Map<String, Object> getBeforeSuiteVariables() {
         return beforeSuiteVariables;
-    }
+    }*/
 
 
-    private void loadGeneralSettings(JsonPath testSuiteJsonPath) {
+    private void loadGeneralSettings(JsonPath testSuiteJsonPath, ITestContext context) {
         Map<String, String> generalSettings = testSuiteJsonPath.get(JSONPATH_GENERAL_SETTINGS);
-        if (generalSettings.containsKey(JSON_FIELD_HTTP_METHOD)) {
-            try {
-                httpMethod = Method.valueOf(generalSettings.get(JSON_FIELD_HTTP_METHOD));
-            } catch (IllegalArgumentException oEx) {
-                throw new HeatException("HTTP method '" + generalSettings.get(JSON_FIELD_HTTP_METHOD) + "' not supported");
-            }
+        String httpMethodInInput = generalSettings.getOrDefault(JSON_FIELD_HTTP_METHOD, Method.GET.toString());
+        Method httpMethod;
+        try {
+            httpMethod = Method.valueOf(httpMethodInInput);
+        } catch (IllegalArgumentException oEx) {
+            throw new HeatException(LogUtils.getInstance(context).getCurrentTestDescription() + " HTTP method '" + httpMethodInInput + "' not supported");
         }
+        context.setAttribute(TestBaseRunner.CONTEXT_HTTP_METHOD, httpMethod);
+
         if (generalSettings.containsKey(SUITE_DESCRIPTION_PATH)) {
-            suiteDescription = generalSettings.get(SUITE_DESCRIPTION_PATH);
+            context.setAttribute(TestBaseRunner.CONTEXT_TEST_SUITE_DESCRIPTION, generalSettings.get(SUITE_DESCRIPTION_PATH));
         }
     }
 
-    private void loadBeforeSuiteSection(JsonPath testSuiteJsonPath) {
-        beforeSuiteVariables = testSuiteJsonPath.get(JSONPATH_BEFORE_SUITE_SECTION);
+    private void loadBeforeSuiteSection(JsonPath testSuiteJsonPath, ITestContext context) {
+        Map<String, Object> beforeSuiteVariables = testSuiteJsonPath.get(JSONPATH_BEFORE_SUITE_SECTION);
         if (beforeSuiteVariables != null && !beforeSuiteVariables.isEmpty()) {
-            logUtils.debug("BEFORE SUITE VARIABLES PRESENT");
+            logger.trace("{} 'beforeSuiteVariables' present", LogUtils.getInstance(context).getCurrentTestDescription());
+            context.setAttribute(TestBaseRunner.CONTEXT_BEFORE_SUITE_VARIABLES, beforeSuiteVariables);
+
+            /*
             placeholderHandler = new PlaceholderHandler();
             for (Map.Entry<String, Object> entry : beforeSuiteVariables.entrySet()) {
                 beforeSuiteVariables.put(entry.getKey(), placeholderHandler.placeholderProcessString(entry.getValue().toString()));
                 logUtils.debug("BEFORE SUITE VARIABLE: '{}' = '{}'", entry.getKey(), entry.getValue());
-            }
+            }*/
         }
     }
 
-    private void loadJsonSchemaForOutputValidation(JsonPath testSuiteJsonPath) {
-        jsonSchemas = testSuiteJsonPath.get(JSONPATH_JSONSCHEMAS);
+    private void loadJsonSchemaForOutputValidation(JsonPath testSuiteJsonPath, ITestContext context) {
+        Map<String, String> jsonSchemas = testSuiteJsonPath.get(JSONPATH_JSONSCHEMAS);
+        if (jsonSchemas != null && !jsonSchemas.isEmpty()) {
+            logger.trace("{} 'beforeSuiteVariables' present", LogUtils.getInstance(context).getCurrentTestDescription());
+            context.setAttribute(TestBaseRunner.CONTEXT_JSON_SCHEMAS, jsonSchemas);
+        }
     }
 
     private Iterator<Object[]> getTestCaseIterator(JsonPath testSuiteJsonPath) {
@@ -176,8 +196,7 @@ public class TestCaseUtils {
         for (Object testCase : testCases) {
             listOfArray.add(new Object[]{testCase});
         }
-        tcArrayIterator = listOfArray.iterator();
-        return tcArrayIterator;
+        return listOfArray.iterator();
     }
 
     /**
@@ -185,43 +204,35 @@ public class TestCaseUtils {
      * Checks are made basing on the environments enabled for the specific test (specified in the testng.xml and in the 'environment' system property
      * set in the test running execution command that specifies the environment against with we want to run the test)
      * and on the name of a test suite (explicitly requested by 'heatTest' system property set during the test running execution command).
-     * @param currentTestSuite the name of the test suite currently in execution
      * @return a boolean value: 'true' if the test is runnable, 'false' if it is not.
      */
-    public boolean isTestSuiteRunnable(String currentTestSuite) {
+    private boolean isTestSuiteRunnable(ITestContext context) {
         boolean isTSrunnable = false;
-        EnvironmentHandler eh = TestSuiteHandler.getInstance().getEnvironmentHandler();
+        List<String> enabledEnvironments = (List<String>) context.getAttribute(TestBaseRunner.CONTEXT_ENABLED_ENVIRONMENTS);
+        String environmentUnderTest = (String) context.getAttribute(TestBaseRunner.CONTEXT_ENVIRONMENT_UNDER_TEST);
 
-        String enabledEnvironments = eh.getEnabledEnvironments();
-        String envUnderTest = eh.getEnvironmentUnderTest();
-        if (enabledEnvironments.contains(envUnderTest)) {
+        if (enabledEnvironments.contains(environmentUnderTest)) {
+            isTSrunnable = true;
+            logger.trace("{} The suite is runnable in the environment {}", LogUtils.getInstance(context).getCurrentTestDescription(), environmentUnderTest);
+        } else {
+            logger.trace("{} The suite is NOT runnable in the environment {}", LogUtils.getInstance(context).getCurrentTestDescription(), environmentUnderTest);
+        }
 
-            List<String> heatTestPropertyList = eh.getHeatTestPropertyList();
-            if (heatTestPropertyList.isEmpty()) {
-                isTSrunnable = true;
-            } else {
-                for (String heatTestProperty : heatTestPropertyList) {
+        // take the system property passed by command line with '-DheatTest=...'
+        List<String> heatTestsToRun = Arrays.asList(System.getProperty(TestBaseRunner.SYSPROP_HEAT_TEST,"").split(TestBaseRunner.ENABLED_ENVIRONMENT_STRING_SEPARATOR));
 
-                    String[] sysPropTestIdSplitted = TestBaseRunner.heatTestPropertySplit(heatTestProperty);
-                    String suiteNameToRun = sysPropTestIdSplitted[0];
-
-                    if (suiteNameToRun == null || (suiteNameToRun != null && currentTestSuite.equalsIgnoreCase(suiteNameToRun))) {
-                        isTSrunnable = true;
-                        break;
-                    }
+        if (isTSrunnable && heatTestsToRun.size() > 0) {
+            isTSrunnable = false;
+            // loop and check each property. They can be simple <suiteName> or <suiteName>.<TestCaseId>. Now we care only to check if the suite is runnable
+            for (String element : heatTestsToRun) {
+                String suiteName = element.split(".")[0];
+                if (suiteName.equalsIgnoreCase(context.getName())) {
+                    isTSrunnable = true;
+                    break;
                 }
             }
         }
-
         return isTSrunnable;
-    }
-
-    public Method getHttpMethod() {
-        return httpMethod;
-    }
-
-    public String getSuiteDescription() {
-        return suiteDescription;
     }
 
     /**
@@ -231,13 +242,13 @@ public class TestCaseUtils {
      * 'correctResponse' or 'errorResponse'
      * @return the json schema path
      */
-    public String getRspJsonSchemaPath(String jsonSchemaToCheck) {
+    /*public String getRspJsonSchemaPath(String jsonSchemaToCheck) {
         String jsonSchemaChoosen = PlaceholderHandler.PLACEHOLDER_JSON_SCHEMA_NO_CHECK;
         if (jsonSchemas != null) {
             jsonSchemaChoosen = jsonSchemas.get(jsonSchemaToCheck);
         }
         return jsonSchemaChoosen;
-    }
+    }*/
 
     /**
      * Method usefult to extract a regex from a specific string. If the regex does not produce any result, in output there will be the original string.
@@ -255,10 +266,10 @@ public class TestCaseUtils {
                 outputStr = formatMatcher.group(group);
             }
         } catch (Exception oEx) {
-            logUtils.warn("Exception: stringToProcess = '{}'", stringToProcess);
-            logUtils.warn("Exception: patternForFormat = '{}'", patternForFormat);
-            logUtils.warn("Exception: group = '{}'", group);
-            logUtils.warn("Exception cause '{}'", oEx.getCause());
+            logger.warn("Exception: stringToProcess = '{}'", stringToProcess);
+            logger.warn("Exception: patternForFormat = '{}'", patternForFormat);
+            logger.warn("Exception: group = '{}'", group);
+            logger.warn("Exception cause '{}'", oEx.getCause());
         }
         return outputStr;
     }
@@ -278,14 +289,15 @@ public class TestCaseUtils {
                 outputStr = NO_MATCH;
             }
         } catch (Exception oEx) {
-            logUtils.warn("Exception cause '{}'", oEx.getCause());
+            logger.warn("Exception cause '{}'", oEx.getCause());
         }
         return outputStr;
     }
 
-    public boolean getSystemParamOnBlocking() {
+    /*public boolean getSystemParamOnBlocking() {
         return "true".equals(System.getProperty("blockingAssert", "true"));
-    }
+    }*/
+
 
     /**
      * Method useful to check if all the test parameters are valid (used to check if the suite is runnable or not).
@@ -296,7 +308,7 @@ public class TestCaseUtils {
      * @param eh environment handler, useful to manage environment variables
      * @return boolean value. 'true' if all the parameters are valid, 'false' otherwise.
      */
-    public boolean isCommonParametersValid(String webappName,
+    /*public boolean isCommonParametersValid(String webappName,
         String webappPath,
         String inputJsonPath,
         LoggingUtils logUtils,
@@ -318,9 +330,9 @@ public class TestCaseUtils {
             }
         }
         return isValid;
-    }
+    }*/
 
-    public void setBeforeStepVariables(Map<String,Object> beforeStepVariables) {
+    /*public void setBeforeStepVariables(Map<String,Object> beforeStepVariables) {
         this.beforeStepVariables = beforeStepVariables;
     }
 
@@ -330,7 +342,7 @@ public class TestCaseUtils {
 
     public void setBeforeSuiteVariables(Map<String, Object> beforeSuiteVariables) {
         this.beforeSuiteVariables = beforeSuiteVariables;
-    }
+    }*/
 
 
     /**
@@ -438,7 +450,7 @@ public class TestCaseUtils {
                 try {
                     paramValue = URLDecoder.decode(paramValue, "UTF-8");
                 } catch (UnsupportedEncodingException e) {
-                    logUtils.error("Error during paramValue '{}' decoding: {}", paramValue, e.getMessage());
+                    logger.error("Error during paramValue '{}' decoding: {}", paramValue, e.getMessage());
                 }
             }
         }
