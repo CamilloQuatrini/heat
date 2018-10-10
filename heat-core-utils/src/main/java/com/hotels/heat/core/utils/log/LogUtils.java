@@ -15,109 +15,49 @@
  */
 package com.hotels.heat.core.utils.log;
 
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import com.hotels.heat.core.runner.TestBaseRunner;
-import org.slf4j.LoggerFactory;
 import org.testng.ITestContext;
-
 
 /**
  * This class contains utilities for logging.
  */
-public class LogUtils extends LoggerFactory {
+public final class LogUtils {
 
+    private static final String NO_DATA_AVAILABLE = "NO_DATA_AVAILABLE";
     private ITestContext context;
-    private String testID;
+    private String suiteName;
+    private String testCaseId;
+    private String testCaseStepId;
+    private static LogUtils logUtils;
 
-    private String testCaseDetails;
-    private Integer flowStep;
-    private String logLevel;
-    private Class className;
-
-    public LogUtils() {
-        this.testCaseDetails = "";
-        this.setLogLevel();
-        this.logLevel = Level.INFO.toString();
+    public LogUtils(ITestContext context) {
+        this.context = context;
+        suiteName = this.context.getName();
+        testCaseId = this.context.getAttribute(TestBaseRunner.CONTEXT_TEST_CASE_ID) != null ? this.context.getAttribute(TestBaseRunner.CONTEXT_TEST_CASE_ID).toString() : NO_DATA_AVAILABLE;
+        testCaseStepId = this.context.getAttribute(TestBaseRunner.CONTEXT_TEST_CASE_STEP_ID) != null ? this.context.getAttribute(TestBaseRunner.CONTEXT_TEST_CASE_STEP_ID).toString() : NO_DATA_AVAILABLE;
     }
 
     /**
-     * This method sets the log level (logback).
+     * Singleton implementation for the object.
+     * @return the singleton instance of the object
      */
-    public void setLogLevel() {
-        logLevel = System.getProperty("logLevel", Level.INFO.toString());
-        Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-
-        Level logLevelSetting = Level.toLevel(logLevel.toUpperCase());
-        root.setLevel(logLevelSetting);
-    }
-
-    public void setTestContext(ITestContext context) {
-        this.context = context;
-    }
-
-    public void setTestCaseId(String testID) {
-        this.testID = testID;
-    }
-
-    public void resetTestCaseId() {
-        this.testID = null;
-    }
-
-
-    public void setFlowStep(Integer flowStepInput) {
-        flowStep = flowStepInput;
-    }
-
-    public void resetFlowStep() {
-        flowStep = null;
-    }
-
-    public String getTestCaseDetails() {
-        testCaseDetails = "[" + (context != null ? context.getName() : "") + "] ";
-        if (testID != null) {
-            testCaseDetails = "[" + context.getName() + TestBaseRunner.TESTCASE_ID_SEPARATOR + testID + "]";
+    public static synchronized LogUtils getInstance(ITestContext context) {
+        if (logUtils == null) {
+            logUtils = new LogUtils(context);
         }
+        return logUtils;
+    }
 
-        testCaseDetails += " ";
-        if (flowStep != null) {
-            testCaseDetails += "[FLOW STEP #" + flowStep + "] ";
+    public String getCurrentTestDescription() {
+        String descriptionString = "[" + suiteName;
+        if (!testCaseId.equals(NO_DATA_AVAILABLE)) {
+            descriptionString += "." + testCaseId;
         }
-        return testCaseDetails;
-    }
-
-
-
-    public void info(String message) { log(Level.INFO, message); }
-
-    public void debug(String message) {
-        log(Level.DEBUG, message);
-    }
-
-    public void trace(String message) {
-        log(Level.TRACE, message);
-    }
-
-    public void error(String message) { log(Level.ERROR, message); }
-
-    public void warn(String message) {
-        log(Level.WARN, message);
-    }
-
-
-    /*private void log(Level mode, String message, Object... params) {
-        try {
-            org.slf4j.Logger logger = LoggerFactory.getLogger(this.className);
-            Class[] cArg = new Class[2];
-            cArg[0] = Level.class;
-            cArg[1] = Object[].class;
-            Method loggerMethod = logger.getClass().getMethod(mode, cArg);
-            loggerMethod.invoke(logger, message, params);
-        } catch (Exception oEx) {
-            throw new HeatException(oEx.getClass()
-                    + " / cause: '" + oEx.getCause() + "' / message: '" + oEx.getLocalizedMessage() + "'");
+        if (!testCaseStepId.equals(NO_DATA_AVAILABLE)) {
+            descriptionString += "][ STEP #" + testCaseStepId;
         }
-    }*/
+        descriptionString += "]";
+        return descriptionString;
+    }
 
 }

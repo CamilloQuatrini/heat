@@ -29,6 +29,9 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.hotels.heat.core.utils.testobjects.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.ITestContext;
 import org.testng.SkipException;
 
@@ -81,7 +84,9 @@ public class TestCaseUtils {
     private Map<String, Object> beforeSuiteVariables;
     private Map<String, Object> beforeStepVariables;
 
-    private LoggingUtils logUtils;
+    private final Logger logger = LoggerFactory.getLogger(TestCaseUtils.class);
+
+    private ITestContext context;
 
     /**
      * Constructor for TestCaseUtils object.
@@ -89,15 +94,51 @@ public class TestCaseUtils {
      * preload variables coming from the json input file driving the test suite. Moreover it handles the running of any test cases
      * inside the suite.
      */
-    public TestCaseUtils() {
-        this.beforeStepVariables = new HashMap();
-        this.httpMethod = Method.GET;
-        this.suiteDescription = SUITE_DESCRIPTION_DEFAULT;
+    public TestCaseUtils(ITestContext context) {
+        this.context = context;
+        //this.beforeStepVariables = new HashMap();
+        //this.httpMethod = Method.GET;
+        //this.suiteDescription = SUITE_DESCRIPTION_DEFAULT;
     }
 
-    public void setLogUtils(LoggingUtils logUtils) {
-        this.logUtils = logUtils;
+    /**
+     * It is the method that handles the reading of the json input file that is driving the test suite.
+     * @param context it is the context of the test. It is managed from TestNG but it can be used to set and read some parameters all over the test suite execution
+     * @return the iterator of the test cases described in the json input file
+     */
+    public Iterator<Object[]> jsonReader() {
+
+        Iterator<Object[]> iterator;
+        String testSuiteFilePath = (String) context.getAttribute(TestBaseRunner.CONTEXT_SUITE_JSON_FILE_PATH);
+        //check if the test suite is runnable
+        // (in terms of enabled environments or test suite explicitly declared in the 'heatTest' system property)
+        if (isTestSuiteRunnable(context.getName())) {
+            File testSuiteJsonFile = Optional.ofNullable(getClass().getResource(testSuiteFilePath))
+                .map(url -> new File(url.getPath()))
+                .orElseThrow(() -> new HeatException(logUtils.getExceptionDetails()
+                        + "the file '" + testSuiteFilePath + "' does not exist"));
+            try {
+                JsonPath testSuiteJsonPath = with(testSuiteJsonFile);
+                loadGeneralSettings(testSuiteJsonPath);
+                loadBeforeSuiteSection(testSuiteJsonPath);
+                loadJsonSchemaForOutputValidation(testSuiteJsonPath);
+                iterator = getTestCaseIterator(testSuiteJsonPath);
+            } catch (Exception oEx) {
+                throw new HeatException(String.format("%scatched exception '%s'",
+                        logUtils.getExceptionDetails(), oEx.getLocalizedMessage()), oEx);
+            }
+        } else {
+            logUtils.debug("SKIPPED test suite");
+            context.setAttribute(TestBaseRunner.CONTEXT_SUITE_STATUS, Status.SKIPPED);
+            //throw new SkipException(logUtils.getTestCaseDetails() + "Skip test: this suite is not requested");
+        }
+        return iterator;
     }
+
+    public Map<String, Object> getBeforeSuiteVariables() {
+        return beforeSuiteVariables;
+    }
+
 
     private void loadGeneralSettings(JsonPath testSuiteJsonPath) {
         Map<String, String> generalSettings = testSuiteJsonPath.get(JSONPATH_GENERAL_SETTINGS);
@@ -111,7 +152,6 @@ public class TestCaseUtils {
         if (generalSettings.containsKey(SUITE_DESCRIPTION_PATH)) {
             suiteDescription = generalSettings.get(SUITE_DESCRIPTION_PATH);
         }
-
     }
 
     private void loadBeforeSuiteSection(JsonPath testSuiteJsonPath) {
@@ -138,43 +178,6 @@ public class TestCaseUtils {
         }
         tcArrayIterator = listOfArray.iterator();
         return tcArrayIterator;
-    }
-
-    /**
-     * It is the method that handles the reading of the json input file that is driving the test suite.
-     * @param context it is the context of the test. It is managed from TestNG but it can be used to set and read some parameters all over the test suite execution
-     * @return the iterator of the test cases described in the json input file
-     */
-    public Iterator<Object[]> jsonReader(ITestContext context) {
-
-        Iterator<Object[]> iterator;
-        String testSuiteFilePath = (String) context.getAttribute(TestBaseRunner.CONTEXT_SUITE_JSON_FILE_PATH);
-        //check if the test suite is runnable
-        // (in terms of enabled environments or test suite explicitly declared in the 'heatTest' system property)
-        if (isTestSuiteRunnable(context.getName())) {
-            File testSuiteJsonFile = Optional.ofNullable(getClass().getResource(testSuiteFilePath))
-                .map(url -> new File(url.getPath()))
-                .orElseThrow(() -> new HeatException(logUtils.getExceptionDetails()
-                        + "the file '" + testSuiteFilePath + "' does not exist"));
-            try {
-                JsonPath testSuiteJsonPath = with(testSuiteJsonFile);
-                loadGeneralSettings(testSuiteJsonPath);
-                loadBeforeSuiteSection(testSuiteJsonPath);
-                loadJsonSchemaForOutputValidation(testSuiteJsonPath);
-                iterator = getTestCaseIterator(testSuiteJsonPath);
-            } catch (Exception oEx) {
-                throw new HeatException(String.format("%scatched exception '%s'",
-                        logUtils.getExceptionDetails(), oEx.getLocalizedMessage()), oEx);
-            }
-        } else {
-            logUtils.debug("SKIPPED test suite");
-            throw new SkipException(logUtils.getTestCaseDetails() + "Skip test: this suite is not requested");
-        }
-        return iterator;
-    }
-
-    public Map<String, Object> getBeforeSuiteVariables() {
-        return beforeSuiteVariables;
     }
 
     /**

@@ -21,10 +21,13 @@ public class TestCase {
     private String testSuiteName = "TEST SUITE NAME DEFAULT";
     private Status testCaseStatus = Status.NOT_PERFORMED;
 
+    public TestCase() {}
+
     public TestCase(String id, String testSuiteName) {
         this.id = id;
         this.testSuiteName = testSuiteName;
     }
+
 
     public void setId(String id) {
         this.id = id;

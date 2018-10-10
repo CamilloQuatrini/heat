@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.testng.ITestContext;
 import org.testng.annotations.Test;
 
 import com.hotels.heat.core.checks.BasicFlowChecks;
@@ -41,7 +42,7 @@ public class FlowMode extends TestBaseRunner {
      * @param testCaseParams Map containing test case parameters coming from the json input file
      */
     @Test(dataProvider = "provider")
-    public void runningTest(Map testCaseParams) {
+    public void runningTest(Map testCaseParams, ITestContext context) {
         TestSuiteHandler testSuiteHandler = TestSuiteHandler.getInstance();
         setContextAttributes(testCaseParams);
         String testSuiteName = getTestContext().getName();

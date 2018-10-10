@@ -17,6 +17,7 @@ package com.hotels.heat.core.runner;
 
 import java.util.Map;
 
+import org.testng.ITestContext;
 import org.testng.Reporter;
 import org.testng.annotations.Test;
 
@@ -38,9 +39,9 @@ public class CompareMode extends TestBaseRunner {
      * @param testCaseParams Map containing test case parameters coming from the json input file
      */
     @Test(dataProvider = "provider")
-    public void runningTest(Map testCaseParams) {
+    public void runningTest(Map testCaseParams, ITestContext context) {
         TestSuiteHandler testSuiteHandler = TestSuiteHandler.getInstance();
-        setContextAttributes(testCaseParams);
+        setContextAttributes(testCaseParams, context);
         String testSuiteName = getTestContext().getName();
         String testCaseId = testCaseParams.get(TestBaseRunner.ATTR_TESTCASE_ID).toString();
         getTestContext().setAttribute(TestBaseRunner.ATTR_TESTCASE_ID, testCaseId);

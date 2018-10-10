@@ -17,10 +17,14 @@ package com.hotels.heat.core.runner;
 
 import java.util.*;
 
+import com.hotels.heat.core.utils.TestCaseUtils;
+import com.hotels.heat.core.utils.log.LogUtils;
 import com.hotels.heat.core.utils.testobjects.Status;
 import com.hotels.heat.core.utils.testobjects.TestCase;
 import com.hotels.heat.core.utils.testobjects.TestSuite;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.ITest;
 import org.testng.ITestContext;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
@@ -50,9 +54,13 @@ public class TestBaseRunner implements RunnerInterface {
     public static final String ENABLED_ENVIRONMENT_STRING_SEPARATOR = ",";
     public static final String CONTEXT_TEST_CASES_LIST = "TEST_CASES_LIST";
     public static final String CONTEXT_SUITE_STATUS = "SUITE_STATUS";
+    public static final String CONTEXT_TEST_CASE_ID = "TEST_CASE_ID";
+    public static final String CONTEXT_TEST_CASE_STEP_ID = "TEST_CASE_STEP_ID";
+
+    private final Logger logger = LoggerFactory.getLogger(TestBaseRunner.class);
 
     static {
-        new LoggingUtils().info(
+        LoggerFactory.getLogger(TestBaseRunner.class).info(
                 "\n\n"
                 + "   ooooo   ooooo oooooooooooo       .o.       ooooooooooooo \n" +
                   "   `888'   `888' `888'     `8      .888.      8'   888   `8 \n" +
@@ -118,15 +126,10 @@ public class TestBaseRunner implements RunnerInterface {
                                 @Optional(NO_INPUT_WEBAPP_NAME) String inputWebappName,
                                 ITestContext context) {
 
+        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "beforeTestSuite - start");
         context.setAttribute(CONTEXT_PROPERTY_FILE_PATH, propFilePath);
         context.setAttribute(CONTEXT_WEBAPP_NAME, inputWebappName);
-
-
-        /*TestSuiteHandler testSuiteHandler = TestSuiteHandler.getInstance();
-        testSuiteHandler.setPropertyFilePath(propFilePath);
-        testSuiteHandler.populateEnvironmentHandler();
-        testSuiteHandler.populateTestCaseUtils();*/
-
+        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "beforeTestSuite - end");
     }
 
     /**
@@ -142,29 +145,33 @@ public class TestBaseRunner implements RunnerInterface {
         String enabledEnvironments,
         ITestContext context) {
 
+        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "beforeTestCase - start");
         context.setAttribute(CONTEXT_ENABLED_ENVIRONMENTS, Arrays.asList(enabledEnvironments.split(ENABLED_ENVIRONMENT_STRING_SEPARATOR)));
         context.setAttribute(CONTEXT_SUITE_JSON_FILE_PATH, inputJsonParamPath);
-
-        /*TestSuiteHandler testSuiteHandler = TestSuiteHandler.getInstance();
-        testSuiteHandler.getEnvironmentHandler().setEnabledEnvironments(enabledEnvironments);
-        inputJsonPath = inputJsonParamPath;
-        testSuiteHandler.getLogUtils().setTestContext(context);
-        testContext = context;*/
+        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "beforeTestCase - end");
     }
 
 
+    /**
+     * Method to extract the iterator of test cases.
+     * @param context testNG context
+     * @return an iterator of the test cases present in the test suite
+     */
     @Override
     @DataProvider(name = "provider")
     public Iterator<Object[]> providerJson(ITestContext context) {
+        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "providerJson - start");
         List<TestCase> testCasesInTheSuite = new ArrayList();
         context.setAttribute(CONTEXT_TEST_CASES_LIST, testCasesInTheSuite);
         context.setAttribute(CONTEXT_SUITE_STATUS, Status.NOT_PERFORMED);
-        return TestSuiteHandler.getInstance().getTestCaseUtils().jsonReader(context);
+        logger.trace(LogUtils.getInstance(context).getCurrentTestDescription() + "providerJson - next step is jsonReader");
+        return (new TestCaseUtils(context)).jsonReader();
     }
 
     /**
      * Elaboration of test case parameters before any request (method executed as first step in the runner).
      * @param testCaseParams Map containing test case parameters coming from the json input file
+     * @param paramsToSkip parameters we need to skip in this phase of placeholder handling
      * @return the same structure as the input parameters but with placeholders resolved
      */
     @Override
@@ -181,6 +188,11 @@ public class TestBaseRunner implements RunnerInterface {
         return tcMapHandler.retrieveProcessedMap();
     }
 
+    /**
+     * Elaboration of test case parameters before any request (method executed as first step in the runner).
+     * @param testCaseParams Map containing test case parameters coming from the json input file
+     * @return the same structure as the input parameters but with placeholders resolved
+     */
     public Map resolvePlaceholdersInTcParams(Map<String, Object> testCaseParams) {
         return resolvePlaceholdersInTcParams(testCaseParams, new ArrayList());
     }
@@ -190,7 +202,7 @@ public class TestBaseRunner implements RunnerInterface {
      * Parameters that will be set will be: 'testId', 'suiteDescription', 'tcDescription'
      * @param testCaseParams Map containing test case parameters coming from the json input file
      */
-    public void setContextAttributes(Map<String, Object> testCaseParams) {
+    public void setContextAttributes(Map<String, Object> testCaseParams, ITestContext context) {
         String testCaseID = testCaseParams.get(ATTR_TESTCASE_ID).toString();
         testContext.setAttribute(ATTR_TESTCASE_ID, testCaseID);
         String suiteDescription = TestSuiteHandler.getInstance().getTestCaseUtils().getSuiteDescription();
