@@ -18,6 +18,7 @@
         "testCases": [
             {
                 "testId": "001",
+                "csv_preloadFile" : "csv/test.csv",
                 "testName": "single mode test for new heat #1",
                 "url": "/json",
                 "queryParameters": {
@@ -33,6 +34,11 @@
                     "responseCode": "200",
                     "jsonSchemaToCheck": "correctResponse",
                     "fieldCheck": [
+                        {
+                            "description": "Mine Test",
+                            "actualValue": "${preload[header1]}",
+                            "expectedValue": "row1_1"
+                        },
                         {
                             "description": "result has to be OK",
                             "actualValue": "${path[status]}",
@@ -186,6 +192,11 @@
                     "responseCode": "200",
                     "jsonSchemaToCheck": "errorResponse",
                     "fieldCheck": [
+                        {
+                            "description": "Mine Test",
+                            "actualValue": "${preload[API_KEY]}",
+                            "expectedValue": "${preload[API_KEY]}"
+                        },
                         {
                             "description": "status has to be REQUEST_DENIED",
                             "actualValue": "${path[status]}",
