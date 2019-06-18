@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015-2018 Expedia Inc.
+ * Copyright (C) 2015-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.hotels.heat.core.utils;
 import static io.restassured.path.json.JsonPath.with;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -32,12 +33,16 @@ import java.util.regex.Pattern;
 import org.testng.ITestContext;
 import org.testng.SkipException;
 
+
+import com.google.gson.Gson;
 import com.hotels.heat.core.environment.EnvironmentHandler;
 import com.hotels.heat.core.handlers.PlaceholderHandler;
 import com.hotels.heat.core.handlers.TestSuiteHandler;
 import com.hotels.heat.core.runner.TestBaseRunner;
 import com.hotels.heat.core.specificexception.HeatException;
 import com.hotels.heat.core.utils.log.LoggingUtils;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderHeaderAware;
 
 import io.restassured.http.Method;
 import io.restassured.path.json.JsonPath;
@@ -62,6 +67,7 @@ public class TestCaseUtils {
     public static final String JSON_FIELD_COOKIES = "cookies";
     public static final String JSON_FIELD_QUERY_PARAMETERS = "queryParameters";
     public static final String JSON_FIELD_HEADERS = "headers";
+    public static final String JSONPATH_CSV_PRELOAD_FILE = "csv_preloadFile";
 
     private static final String JSONPATH_GENERAL_SETTINGS = "testSuite.generalSettings";
     private static final String JSONPATH_BEFORE_SUITE_SECTION = "testSuite.beforeTestSuite";
@@ -134,10 +140,49 @@ public class TestCaseUtils {
         List<Object> testCases = testSuiteJsonPath.get(JSONPATH_TEST_CASES);
         List<Object[]> listOfArray = new ArrayList();
         for (Object testCase : testCases) {
-            listOfArray.add(new Object[]{testCase});
+            if (((Map)testCase).get(JSONPATH_CSV_PRELOAD_FILE)!=null){
+
+                String testId = (String) ((Map) testCase).get(TestBaseRunner.ATTR_TESTCASE_ID) ;
+                logUtils.debug("Csv File Input detected into base test case {} ", testId);
+
+                Gson jsonObj = new Gson();
+                String baseTestCaseString = jsonObj.toJson(testCase);
+
+                long numberOfCsvLines = getCsvLinesNumber((String) ((Map)testCase).get(JSONPATH_CSV_PRELOAD_FILE));
+
+                for (int i = 0; i < numberOfCsvLines; i++) {
+
+                    JsonPath jsPath = new JsonPath(baseTestCaseString);
+
+                    Object duplicatedTestCases = jsPath.get();
+
+                    ((Map) duplicatedTestCases).put(TestBaseRunner.ATTR_TESTCASE_ID,testId + String.format("_%03d", i));
+                    listOfArray.add(new Object[]{duplicatedTestCases});
+                }
+            }else{
+                listOfArray.add(new Object[]{testCase});
+            }
         }
         tcArrayIterator = listOfArray.iterator();
         return tcArrayIterator;
+    }
+
+    private long getCsvLinesNumber(String cvsFileNamePath){
+
+        CSVReaderHeaderAware csvReader ;
+        long numberCsvRows = 1;
+        try {
+            csvReader = new CSVReaderHeaderAware(new FileReader(getClass().getResource("/"+cvsFileNamePath).getFile()));
+            csvReader.readAll();
+            numberCsvRows = csvReader.getLinesRead();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        numberCsvRows -- ;
+
+        logUtils.debug("number of lines read  {} (fileName = {}) ", numberCsvRows , cvsFileNamePath);
+
+        return numberCsvRows;
     }
 
     /**
@@ -161,7 +206,7 @@ public class TestCaseUtils {
             File testSuiteJsonFile = Optional.ofNullable(getClass().getResource(testSuiteFilePath))
                 .map(url -> new File(url.getPath()))
                 .orElseThrow(() -> new HeatException(logUtils.getExceptionDetails()
-                        + "the file '" + testSuiteFilePath + "' does not exist"));
+                    + "the file '" + testSuiteFilePath + "' does not exist"));
             try {
                 JsonPath testSuiteJsonPath = with(testSuiteJsonFile);
                 loadGeneralSettings(testSuiteJsonPath);
@@ -170,7 +215,7 @@ public class TestCaseUtils {
                 iterator = getTestCaseIterator(testSuiteJsonPath);
             } catch (Exception oEx) {
                 throw new HeatException(String.format("%scatched exception '%s'",
-                        logUtils.getExceptionDetails(), oEx.getLocalizedMessage()), oEx);
+                    logUtils.getExceptionDetails(), oEx.getLocalizedMessage()), oEx);
             }
         } else {
             logUtils.debug("SKIPPED test suite");
@@ -181,6 +226,31 @@ public class TestCaseUtils {
 
     public Map<String, Object> getBeforeSuiteVariables() {
         return beforeSuiteVariables;
+    }
+
+    public List<Map<String,String>> getFromCsvFile(String cvsFileNamePath){
+
+        CSVReader csvReader ;
+        List<Map<String,String>> csvListRows = new ArrayList();
+        try {
+            logUtils.debug("Csv File Ready To be read (fileName = {}) ", cvsFileNamePath);
+
+            csvReader = new CSVReader(new FileReader(getClass().getResource("/"+cvsFileNamePath).getFile()));
+
+            String[] header = csvReader.readNext();
+            String[] row;
+            while ((row = csvReader.readNext()) != null) {
+                Map<String,String> rowMap = new HashMap<>();
+                for (int i = 0; i < row.length; i++) {
+                    rowMap.put(header[i],row[i]);
+                }
+                csvListRows.add(rowMap);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return csvListRows;
     }
 
     /**

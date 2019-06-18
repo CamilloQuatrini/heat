@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015-2018 Expedia Inc.
+ * Copyright (C) 2015-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ public interface RunnerInterface {
 
     Iterator<Object[]> providerJson();
 
-    Map resolvePlaceholdersInTcParams(Map<String, Object> testCaseParams, List<String> paramsToSkip);
+    Map resolvePlaceholdersInTcParams(Map<String, Object> testCaseParams, List<String> paramsToSkip, Map csvFileParamsInput);
 
-    Map resolvePlaceholdersInTcParams(Map<String, Object> testCaseParams);
+    Map resolvePlaceholdersInTcParams(Map<String, Object> testCaseParams, Map csvFileParamsInput);
 
     void specificChecks(Map testCaseParams, Map<String, Response> rspRetrieved, String environment);
 

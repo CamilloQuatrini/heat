@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015-2018 Expedia Inc.
+ * Copyright (C) 2015-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,14 +103,14 @@ public class PlaceholderHandler {
      * @return an updated provider map
      */
     public Map<String, HeatPlaceholderModuleProvider> constructProviderMap(Map<String, HeatPlaceholderModuleProvider> providerMapInput,
-            List<String> handledPlaceholders,
-            HeatPlaceholderModuleProvider provider) {
+        List<String> handledPlaceholders,
+        HeatPlaceholderModuleProvider provider) {
         try {
             logUtils.trace("found provider for: {}", provider.getHandledPlaceholders());
             handledPlaceholders.forEach(placeholder -> providerMapInput.put(placeholder, provider));
         } catch (Exception oEx) {
             logUtils.error("catched exception message: '{}' \n cause: '{}'",
-                        oEx.getLocalizedMessage(), oEx.getCause());
+                oEx.getLocalizedMessage(), oEx.getCause());
         }
         return providerMapInput;
     }
@@ -140,7 +140,7 @@ public class PlaceholderHandler {
             }
         } catch (Exception oEx) {
             logUtils.error("catched exception message: '{}' \n cause: '{}'",
-                        oEx.getLocalizedMessage(), oEx.getCause());
+                oEx.getLocalizedMessage(), oEx.getCause());
         }
         return outputObj;
     }
@@ -250,20 +250,20 @@ public class PlaceholderHandler {
 
     private static String escapeRegexCharsInRegex(String s) {
         return s.replace(".", "\\.")
-                //            .replace("-", "\\-")
-                .replace("[", "\\[")
-                .replace("]", "\\]")
-                .replace("{", "\\{")
-                .replace("}", "\\}")
-                .replace("(", "\\(")
-                .replace(")", "\\)")
-                .replace("*", "\\*")
-                .replace("+", "\\+")
-                .replace("?", "\\?")
-                .replace("^", "\\*")
-                .replace("$", "\\$")
-                .replace("|", "\\|")
-                .replace("#", "\\#");
+            //            .replace("-", "\\-")
+            .replace("[", "\\[")
+            .replace("]", "\\]")
+            .replace("{", "\\{")
+            .replace("}", "\\}")
+            .replace("(", "\\(")
+            .replace(")", "\\)")
+            .replace("*", "\\*")
+            .replace("+", "\\+")
+            .replace("?", "\\?")
+            .replace("^", "\\*")
+            .replace("$", "\\$")
+            .replace("|", "\\|")
+            .replace("#", "\\#");
     }
 
     /**
@@ -365,9 +365,9 @@ public class PlaceholderHandler {
             }
         } catch (Exception oEx) {
             logUtils.debug("It is not possible to retrieve the jsonPath "
-                    + "('{}') from the current response. --> response: {}", path, rsp.asString());
-//            throw new HeatException(logUtils.getExceptionDetails() + "It is not possible to retrieve the jsonPath (" + path
-//                    + ") from the current response. --> response: " + rsp.asString());
+                + "('{}') from the current response. --> response: {}", path, rsp.asString());
+            //            throw new HeatException(logUtils.getExceptionDetails() + "It is not possible to retrieve the jsonPath (" + path
+            //                    + ") from the current response. --> response: " + rsp.asString());
         }
         return output;
     }
@@ -438,7 +438,7 @@ public class PlaceholderHandler {
             } else {
                 logUtils.warning("variable '{}' not correctly preloaded - no transformation will be applied", outputStr);
                 outputStr = stringInput;
-//                throw new HeatException(logUtils.getExceptionDetails() + "variable '" + outputStr + "' not correctly preloaded");
+                //                throw new HeatException(logUtils.getExceptionDetails() + "variable '" + outputStr + "' not correctly preloaded");
             }
         }
         return outputStr;
@@ -468,7 +468,7 @@ public class PlaceholderHandler {
             }
         } catch (Exception oEx) {
             logUtils.error("catched exception message: '{}' \n cause: '{}'",
-                        oEx.getLocalizedMessage(), oEx.getCause());
+                oEx.getLocalizedMessage(), oEx.getCause());
         }
         return outputStr;
     }
@@ -479,6 +479,10 @@ public class PlaceholderHandler {
 
     public void setPreloadedVariables(Map<String, Object> preloadedVarsInput) {
         this.preloadedVariables = preloadedVarsInput;
+    }
+
+    public void addCsvFileVariables(Map<String, Object> csvPreloadedVarsInput) {
+        this.preloadedVariables.putAll(csvPreloadedVarsInput);
     }
 
     public Map<String, Object> getPreloadedVariables() {

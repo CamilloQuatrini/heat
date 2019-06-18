@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015-2018 Expedia Inc.
+ * Copyright (C) 2015-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class FlowMode extends TestBaseRunner {
         getTestContext().setAttribute(TestBaseRunner.ATTR_TESTCASE_ID, testCaseId);
 
         if (!super.isTestCaseSkippable(testSuiteName, testCaseId, "", "")) {
-            Map  testCaseParamsElaborated = super.resolvePlaceholdersInTcParams(testCaseParams, PARAMS_TO_SKIP);
+            Map  testCaseParamsElaborated = super.resolvePlaceholdersInTcParams(testCaseParams, PARAMS_TO_SKIP,null);
             getLogUtils().debug("test not skippable");
             RestAssuredRequestMaker restAssuredRequestMaker = new RestAssuredRequestMaker();
             getLogUtils().debug("I'm going to execute 'retrieveInfo'");

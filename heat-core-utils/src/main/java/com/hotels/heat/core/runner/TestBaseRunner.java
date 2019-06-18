@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015-2018 Expedia Inc.
+ * Copyright (C) 2015-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.hotels.heat.core.handlers.TestCaseMapHandler;
 import com.hotels.heat.core.handlers.TestSuiteHandler;
 import com.hotels.heat.core.heatspecificchecks.SpecificChecks;
 import com.hotels.heat.core.utils.RunnerInterface;
+import com.hotels.heat.core.utils.TestCaseUtils;
 import com.hotels.heat.core.utils.log.LoggingUtils;
 
 import io.restassured.response.Response;
@@ -145,21 +146,33 @@ public class TestBaseRunner implements RunnerInterface {
      * @return the same structure as the input parameters but with placeholders resolved
      */
     @Override
-    public Map resolvePlaceholdersInTcParams(Map<String, Object> testCaseParams, List<String> paramsToSkip) {
+    public Map resolvePlaceholdersInTcParams(Map<String, Object> testCaseParams, List<String> paramsToSkip, Map rowListForCsvParams) {
         TestSuiteHandler testSuiteHandler = TestSuiteHandler.getInstance();
         testSuiteHandler.getLogUtils().setTestCaseId(testContext.getAttribute(ATTR_TESTCASE_ID).toString());
 
         // now we start elaborating the parameters.
         placeholderHandler = new PlaceholderHandler();
         placeholderHandler.setPreloadedVariables(testSuiteHandler.getTestCaseUtils().getBeforeSuiteVariables());
-
+        placeholderHandler.addCsvFileVariables(rowListForCsvParams);
         TestCaseMapHandler tcMapHandler = new TestCaseMapHandler(testCaseParams, placeholderHandler, paramsToSkip);
 
         return tcMapHandler.retrieveProcessedMap();
     }
 
-    public Map resolvePlaceholdersInTcParams(Map<String, Object> testCaseParams) {
-        return resolvePlaceholdersInTcParams(testCaseParams, new ArrayList());
+    public Map resolvePlaceholdersInTcParams(Map<String, Object> testCaseParams, Map csvParamsInput) {
+        return resolvePlaceholdersInTcParams(testCaseParams, new ArrayList(), csvParamsInput);
+    }
+
+
+    public List<Map> extractParamsFromCsvFile(Map testCaseParams){
+        List resultList = new ArrayList();
+
+        if(testCaseParams.get(TestCaseUtils.JSONPATH_CSV_PRELOAD_FILE)!= null ){
+            TestSuiteHandler testSuiteHandler = TestSuiteHandler.getInstance();
+            resultList = testSuiteHandler.getTestCaseUtils().getFromCsvFile((String) testCaseParams.get(TestCaseUtils.JSONPATH_CSV_PRELOAD_FILE));
+        }
+
+        return resultList;
     }
 
     /**
@@ -252,9 +265,9 @@ public class TestBaseRunner implements RunnerInterface {
     @Override
     public void specificChecks(Map testCaseParams, Map<String, Response> rspRetrieved, String environment) {
         ServiceLoader.load(SpecificChecks.class).forEach(checks -> checks.process(
-                getTestContext().getName(), testCaseParams, rspRetrieved,
-                TestSuiteHandler.getInstance().getLogUtils().getTestCaseDetails(),
-                TestSuiteHandler.getInstance().getEnvironmentHandler().getEnvironmentUnderTest()
+            getTestContext().getName(), testCaseParams, rspRetrieved,
+            TestSuiteHandler.getInstance().getLogUtils().getTestCaseDetails(),
+            TestSuiteHandler.getInstance().getEnvironmentHandler().getEnvironmentUnderTest()
         ));
     }
 

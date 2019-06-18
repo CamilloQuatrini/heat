@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015-2018 Expedia Inc.
+ * Copyright (C) 2015-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class CompareMode extends TestBaseRunner {
         getTestContext().setAttribute(TestBaseRunner.ATTR_TESTCASE_ID, testCaseId);
 
         if (!super.isTestCaseSkippable(testSuiteName, testCaseId, "", "")) {
-            Map  testCaseParamsElaborated = super.resolvePlaceholdersInTcParams(testCaseParams);
+            Map  testCaseParamsElaborated = super.resolvePlaceholdersInTcParams(testCaseParams,null);
             try {
                 RestAssuredRequestMaker restAssuredRequestMaker = new RestAssuredRequestMaker();
                 BasicMultipleChecks compareChecks = new BasicMultipleChecks(getTestContext());
@@ -60,7 +60,7 @@ public class CompareMode extends TestBaseRunner {
                             getLogUtils().debug("RSP retrieved by {} --> null", entry.getKey());
                         } else {
                             getLogUtils().debug("RSP retrieved by {} --> {}",
-                                    entry.getKey(), entry.getValue().asString());
+                                entry.getKey(), entry.getValue().asString());
                             Reporter.log(entry.getValue().asString());
                         }
                     });
@@ -73,12 +73,12 @@ public class CompareMode extends TestBaseRunner {
             } catch (Exception oEx) {
                 getLogUtils().error("Exception ({}) occourred: '{}'", oEx.getClass(), oEx.getLocalizedMessage());
                 throw new HeatException(testSuiteHandler.getLogUtils().getExceptionDetails() + "Exception (" + oEx.getClass() + ") occourred: '"
-                        + oEx.getLocalizedMessage() + "'");
+                    + oEx.getLocalizedMessage() + "'");
             }
         } else {
             getLogUtils().trace("test skippable [{}]", testCaseId);
             getTestContext().setAttribute(testSuiteName + TestBaseRunner.TESTCASE_ID_SEPARATOR + testCaseId,
-                    TestBaseRunner.STATUS_SKIPPED);
+                TestBaseRunner.STATUS_SKIPPED);
         }
     }
 
